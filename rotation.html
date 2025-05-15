@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rotation BI - Saclay</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100vh;
+      background-color: #000;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    #overlay {
+      position: absolute;
+      top: 10px; left: 20px;
+      z-index: 10;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 18px;
+      display: none;
+    }
+    iframe {
+      border: none;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+    }
+    #youtube-frame {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="overlay"></div>
+
+  <iframe id="youtube-frame"
+    src="https://www.youtube.com/embed/QZalqXVhRHQ?enablejsapi=1&autoplay=1&controls=1&mute=1"
+    title="YouTube video player"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
+
+  <iframe id="bi-frame"></iframe>
+
+  <script>
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+
+    const dashboards = [
+      { name: "Engins", url: "https://app.powerbi.com/view?r=eyJrIjoiN2Q2MmYxNjktODZhMS00NGRhLThkNzctZTU1MzhjMDQ4ZTg2IiwidCI6ImUxMjM1N2I5LTA1NDMtNGFjMi1hMWYyLTM2ZWY5ZWJkNDk2MCJ9" },
+      { name: "SSE", url: "https://app.powerbi.com/view?r=eyJrIjoiMzJjOWVhOTItNmE2Zi00NTJiLWJlNWYtMDU0ZWU1MGQyOTRlIiwidCI6ImUxMjM1N2I5LTA1NDMtNGFjMi1hMWYyLTM2ZWY5ZWJkNDk2MCJ9" },
+      { name: "CA202505 [Saclay] Com15", url: "https://app.powerbi.com/view?r=eyJrIjoiYWRjNDg3YWItMjExNy00MDczLWFiYjUtY2E0YjkwNmFlYjcwIiwidCI6ImUxMjM1N2I5LTA1NDMtNGFjMi1hMWYyLTM2ZWY5ZWJkNDk2MCJ9" },
+      { name: "Contrôle qualité [Saclay]", url: "https://app.powerbi.com/view?r=eyJrIjoiYThlMDIxY2EtMGUwMi00YjBhLWFlNmEtODg0YWQzOWI0NTZmIiwidCI6ImUxMjM1N2I5LTA1NDMtNGFjMi1hMWYyLTM2ZWY5ZWJkNDk2MCJ9" }
+    ];
+
+    const youtubeFrame = document.getElementById('youtube-frame');
+    const biFrame = document.getElementById('bi-frame');
+    const overlay = document.getElementById('overlay');
+
+    let player;
+    let dashboardIndex = 0;
+    let dashboardTimer = null;
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('youtube-frame', {
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
+        }
+      });
+    }
+
+    function onPlayerReady(event) {
+      player.mute();
+      player.playVideo();
+    }
+
+    function startDashboardRotation() {
+      overlay.style.display = 'block';
+      youtubeFrame.style.display = 'none';
+      biFrame.style.display = 'block';
+
+      function showNextDashboard() {
+        const current = dashboards[dashboardIndex];
+        biFrame.src = current.url;
+        overlay.textContent = current.name;
+        dashboardIndex++;
+
+        if (dashboardIndex >= dashboards.length) {
+          // Fin du cycle dashboards, on retourne à la vidéo
+          clearInterval(dashboardTimer);
+          dashboardIndex = 0;
+          biFrame.style.display = 'none';
+          overlay.style.display = 'none';
+          youtubeFrame.style.display = 'block';
+          player.seekTo(0);
+          player.playVideo();
+        }
+      }
+
+      showNextDashboard();
+      dashboardTimer = setInterval(showNextDashboard, 30000);
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.ENDED) {
+        // Dès que la vidéo est finie, on démarre la rotation dashboards
+        startDashboardRotation();
+      }
+    }
+  </script>
+
+</body>
+</html>
+
